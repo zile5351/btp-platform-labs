@@ -1,0 +1,6 @@
+globalaccount = "my-global-account-subdomain"
+region = "ap21"
+project = "labs"
+env = "dev"
+suffix = "lzl1230"
+admin_email = "my-email@example.com"

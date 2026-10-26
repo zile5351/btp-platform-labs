@@ -1,0 +1,12 @@
+node_modules/
+mta_archives/
+gen/
+*.mtar
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+secrets.tfvars
+*.auto.tfvars
+dev.tfvars
+qa.tfvars
