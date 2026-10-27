@@ -1,7 +1,6 @@
 _schema-version: 3.3.0
 ID: app.dev
 extends: app
-version: 1.0.0
 
 modules:
   - name: app-srv
