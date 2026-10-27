@@ -44,6 +44,7 @@ jobs:
       environment: dev
       mtaext: mtaext/dev.mtaext
       version-rule: ALL
+    secrets: inherit
 
   deploy-prod:
     needs: deploy-dev
@@ -52,3 +53,4 @@ jobs:
     with:
       environment: prod
       mtaext: mtaext/prod.mtaext
+    secrets: inherit
