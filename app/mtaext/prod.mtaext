@@ -1,0 +1,12 @@
+_schema-version: 3.3.0
+ID: app.prod
+extends: app
+version: 1.0.0
+
+modules:
+  - name: app-srv
+    parameters:
+      memory: 512M
+      instances: 1
+    properties:
+      APP_ENV: prod

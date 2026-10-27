@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -31,29 +33,22 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: mtar
-          path: app/gen/app.mtar
-  deploy:
+          path: |
+            app/gen/app.mtar
+            app/mtaext/*.mtaext
+          if-no-files-found: error
+  deploy-dev:
     needs: build
-    runs-on: ubuntu-latest
-    environment: trial-cf
-    steps:
-      - name: Download MTAR
-        uses: actions/download-artifact@v8
-        with:
-          name: mtar
-      - name: Install cf CLI and MultiApps plugin
-        run: |
-          wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo gpg --dearmor -o /usr/share/keyrings/cli.cloudfoundry.org.gpg
-          echo "deb [signed-by=/usr/share/keyrings/cli.cloudfoundry.org.gpg] https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
-          sudo apt-get update && sudo apt-get install -y cf8-cli
-          cf install-plugin multiapps -f
-      - name: Deploy to Cloud Foundry
-        env:
-          CF_API: ${{ secrets.CF_API }}
-          CF_ORG: ${{ secrets.CF_ORG }}
-          CF_SPACE: ${{ secrets.CF_SPACE }}
-          CF_USER: ${{ secrets.CF_USER }}
-          CF_PASSWORD: ${{ secrets.CF_PASSWORD }}
-        run: |
-          cf login -a "$CF_API" -u "$CF_USER" -p "$CF_PASSWORD" -o "$CF_ORG" -s "$CF_SPACE"
-          cf deploy app.mtar -f
+    uses: ./.github/workflows/deploy-template.yml
+    with:
+      environment: dev
+      mtaext: mtaext/dev.mtaext
+      version-rule: ALL
+
+  deploy-prod:
+    needs: deploy-dev
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/deploy-template.yml
+    with:
+      environment: prod
+      mtaext: mtaext/prod.mtaext
