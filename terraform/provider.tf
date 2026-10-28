@@ -5,6 +5,14 @@ terraform {
       version = ">= 1.27.0"
     }
   }
+
+  cloud {
+    organization = "zile-btp-labs"
+
+    workspaces {
+      name = "btp-labs-dev"
+    }
+  }
 }
 
 provider "btp" {
