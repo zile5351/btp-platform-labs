@@ -1,0 +1,62 @@
+name: terraform
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-dev
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "true"
+  BTP_USERNAME: ${{ secrets.BTP_USERNAME }}
+  BTP_PASSWORD: ${{ secrets.BTP_PASSWORD }}
+  TF_VAR_globalaccount: ${{ secrets.TF_VAR_GLOBALACCOUNT }}
+  TF_VAR_admin_email: ${{ secrets.TF_VAR_ADMIN_EMAIL }}
+  TF_VAR_region: ${{ vars.TF_VAR_REGION }}
+  TF_VAR_project: ${{ vars.TF_VAR_PROJECT }}
+  TF_VAR_env: ${{ vars.TF_VAR_ENV }}
+  TF_VAR_suffix: ${{ vars.TF_VAR_SUFFIX }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          cli_config_credetials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Format check
+        run: terraform fmt -check -recursive
+
+      - name: Init
+        run: terraform init -input=false
+
+      - name: Validate
+        run: terraform validate
+
+      - name: Plan
+        run: terraform plan -input=false -no-color | tee plan.txt
+
+      - name: Publish plan to the run summary
+        if: always()
+        run: |
+          {
+             echo "### Terraform plan (dev)"
+             echo '```'
+             cat plan.txt
+             echo '```'
+           } >> "$GITHUB_STEP_SUMMARY"
