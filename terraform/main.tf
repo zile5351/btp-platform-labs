@@ -2,6 +2,10 @@ resource "btp_subaccount" "this" {
   name      = "${var.project}-${var.env}"
   subdomain = "${var.project}-${var.env}-${var.suffix}"
   region    = var.region
+  labels = {
+    "managed-by"  = ["terraform"]
+    "environment" = [var.env]
+  }
 }
 
 # Check the exact service and plan names on the cockpit's Entitlements page
