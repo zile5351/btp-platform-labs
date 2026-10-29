@@ -1,36 +1,33 @@
-resource "btp_subaccount" "this" {
-  name      = "${var.project}-${var.env}"
-  subdomain = "${var.project}-${var.env}-${var.suffix}"
-  region    = var.region
+module "subaccount" {
+  source = "./modules/subaccounts"
+
+  name        = "${var.project}-${var.env}"
+  subdomain   = "${var.project}-${var.env}-${var.suffix}"
+  region      = var.region
+  admin_email = var.admin_email
+  cfname      = "${var.project}-${var.env}-cf"
   labels = {
     "managed-by"  = ["terraform"]
     "environment" = [var.env]
   }
 }
 
-# Check the exact service and plan names on the cockpit's Entitlements page
-resource "btp_subaccount_entitlement" "cf_runtime" {
-  subaccount_id = btp_subaccount.this.id
-  service_name  = "APPLICATION_RUNTIME"
-  plan_name     = "MEMORY"
-  amount        = 1
+moved {
+  from = btp_subaccount.this
+  to   = module.subaccount.btp_subaccount.this
 }
 
-resource "btp_subaccount_environment_instance" "cf" {
-  subaccount_id    = btp_subaccount.this.id
-  name             = "${var.project}-${var.env}-cf"
-  environment_type = "cloudfoundry"
-  service_name     = "cloudfoundry"
-  plan_name        = "trial"
-  parameters = jsonencode({
-    instance_name = "${var.project}-${var.env}"
-  })
-  depends_on = [btp_subaccount_entitlement.cf_runtime]
+moved {
+  from = btp_subaccount_entitlement.cf_runtime
+  to   = module.subaccount.btp_subaccount_entitlement.cf_runtime
 }
 
-resource "btp_subaccount_role_collection_assignment" "admin" {
-  subaccount_id        = btp_subaccount.this.id
-  role_collection_name = "Subaccount Administrator"
-  user_name            = var.admin_email
-  origin               = "sap.default"
+moved {
+  from = btp_subaccount_environment_instance.cf
+  to   = module.subaccount.btp_subaccount_environment_instance.cf
+}
+
+moved {
+  from = btp_subaccount_role_collection_assignment.admin
+  to   = module.subaccount.btp_subaccount_role_collection_assignment.admin
 }
