@@ -25,9 +25,18 @@ resource "btp_subaccount_environment_instance" "cf" {
   depends_on = [btp_subaccount_entitlement.cf_runtime]
 }
 
-resource "btp_subaccount_role_collection_assignment" "admin" {
+resource "btp_subaccount_role_collection_assignment" "group_roles" {
+  for_each             = var.group_role_assignments
   subaccount_id        = btp_subaccount.this.id
-  role_collection_name = "Subaccount Administrator"
-  user_name            = var.admin_email
-  origin               = "sap.default"
+  role_collection_name = each.value.role_collection
+  group_name           = each.value.group
+  origin               = var.idp_origin
+}
+
+removed {
+  from = btp_subaccount_role_collection_assignment.admin
+
+  lifecycle {
+    destroy = false
+  }
 }
