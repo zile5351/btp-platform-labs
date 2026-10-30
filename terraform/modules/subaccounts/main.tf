@@ -33,6 +33,15 @@ resource "btp_subaccount_role_collection_assignment" "group_roles" {
   origin               = var.idp_origin
 }
 
+resource "btp_subaccount_entitlement" "additional" {
+  for_each = var.entitlements
+
+  subaccount_id = btp_subaccount.this.id
+  service_name  = each.value.service_name
+  plan_name     = each.value.plan_name
+  amount        = each.value.amount
+}
+
 removed {
   from = btp_subaccount_role_collection_assignment.admin
 
