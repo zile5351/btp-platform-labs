@@ -8,6 +8,7 @@ module "subaccount" {
   labels = {
     "managed-by"  = ["terraform"]
     "environment" = [var.env]
+    "owner"       = ["zile"]
   }
   group_role_assignments = {
     admins = {
@@ -48,9 +49,3 @@ moved {
   from = btp_subaccount_role_collection_assignment.admin
   to   = module.subaccount.btp_subaccount_role_collection_assignment.admin
 }
-
-import {
-  to = module.subaccount.btp_subaccount_entitlement.additional["destination-lite"]
-  id = "${module.subaccount.subaccount_id},destination,lite"
-}
-
