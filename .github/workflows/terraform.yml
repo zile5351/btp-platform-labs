@@ -12,6 +12,8 @@ on:
       - "terraform/**"
       - ".github/workflows/terraform.yml"
   workflow_dispatch:
+  schedule:
+    - cron: "0 1 * * *" # Runs every day at 01:00 UTC (09:00 MYT)
 
 permissions:
   contents: read
@@ -32,6 +34,7 @@ env:
 
 jobs:
   plan:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -70,7 +73,7 @@ jobs:
     needs: plan
     # PR: plan runs and apply is skipped, so reviewers see the plan
     # on merge to master: plan runs, then apply waits for yours approval in the terraform-dev environment. It applies on being approved by reviewer.
-    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/master' && (github.event_name != 'pull_request' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment: terraform-dev
     defaults:
@@ -89,3 +92,38 @@ jobs:
 
       - name: Apply
         run: terraform apply -input=false -auto-approve -no-color
+
+  drift:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Init
+        run: terraform init -input=false
+
+      - name: Check for drift
+        run: |
+          set +e
+          terraform plan -input-false -no-color -detailed-exitcode > plan.txt
+          code=$?
+          set -e
+          {
+            echo "### Drift check (dev)"
+            echo '```'
+            cat plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -eq 2 ]; then
+            echo "::error::Drift detected: BTP no longer matches the Terraform code"
+            exit 1
+          fi
+          exit "$code"
