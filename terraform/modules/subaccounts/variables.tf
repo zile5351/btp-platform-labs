@@ -38,3 +38,13 @@ variable "idp_origin" {
   description = "Origin key of the identity provider the groups come from"
   default     = "sap.default"
 }
+
+variable "entitlements" {
+  type = map(object({
+    service_name = string
+    plan_name    = string
+    amount       = optional(number)
+  }))
+  description = "Additional service entitlements for the subaccount"
+  default     = {}
+}

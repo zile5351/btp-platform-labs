@@ -20,6 +20,13 @@ module "subaccount" {
       group           = "btp-${var.env}-viewers"
     }
   }
+
+  entitlements = {
+    destination-lite = {
+      service_name = "destination"
+      plan_name    = "lite"
+    }
+  }
 }
 
 moved {
@@ -41,3 +48,9 @@ moved {
   from = btp_subaccount_role_collection_assignment.admin
   to   = module.subaccount.btp_subaccount_role_collection_assignment.admin
 }
+
+import {
+  to = module.subaccount.btp_subaccount_entitlement.additional["destination-lite"]
+  id = "${module.subaccount.subaccount_id},destination,lite"
+}
+
